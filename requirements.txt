@@ -1,0 +1,3 @@
+pyyaml>=6.0
+# optional, only if you want real browser automation:
+# playwright>=1.40

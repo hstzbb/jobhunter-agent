@@ -1,0 +1,12 @@
+# Example rule: when a JD matches, set these form fields automatically.
+# Anything the master resume can answer is filled here. Anything it
+# CANNOT answer goes to the human via the question queue.
+
+name: default_answers
+reason: "boilerplate answers the agent may give without asking"
+
+# Always set these fields on the application form.
+set_field:
+  visa_sponsorship_required: "No"
+  authorized_to_work: "Yes"
+  earliest_start_date: "2026-10-15"

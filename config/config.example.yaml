@@ -1,0 +1,24 @@
+# jobhunter-agent configuration
+# Copy to config/config.yaml and edit.
+
+# What to search for on each source adapter.
+query: "python backend"
+
+# Score cut-off: only jobs with score >= min_score get tailored & submitted.
+min_score: 80
+
+# Per-day submission cap. The agent will not go over this, even if there
+# are more good jobs -- this is both politeness and anti-ban.
+daily_cap: 30
+
+# Hard filter: the JD must contain at least one of these strings (case-insensitive).
+# Empty list disables this check.
+must_have_any:
+  - python
+  - backend
+  - golang
+  - fastapi
+  - distributed
+
+# Where screenshots of each submission go.
+screenshot_dir: "data/shots"

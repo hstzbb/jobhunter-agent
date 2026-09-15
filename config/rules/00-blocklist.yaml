@@ -1,0 +1,8 @@
+# Example rule: hard-reject any posting that matches one of these.
+# Every pit you hit becomes one YAML file.
+
+name: blocklist
+reason: "disqualifying keywords"
+
+# If the JD text matches this regex, the job is rejected outright.
+block_if_matches: "(?i)PhD\\s+(required|preferred)|requires\\s+security\\s+clearance|on[- ]site\\s+only.*(Moscow|Beijing)"

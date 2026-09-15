@@ -1,0 +1,22 @@
+# data & secrets
+data/applied.db
+data/shots/
+config/config.yaml
+*.log
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+
+# os
+.DS_Store
+Thumbs.db
