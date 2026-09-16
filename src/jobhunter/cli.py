@@ -2,8 +2,8 @@
 
     jh submit --yes     run the full 8-step pipeline end-to-end
     jh status           print the daily panel
-    jh ask              list / answer the human-in-the-loop questions
-    jh ask <id> --answer "..."
+    jh ask              list / answer human-in-the-loop questions
+    jh login <site>     open browser and log into zhipin | iguopin
 """
 from __future__ import annotations
 
@@ -17,36 +17,61 @@ from .dashboard.panel import render
 from .loop.queue import HumanQueue
 from .pipeline import Pipeline
 from .sources.dummy import DummySource
-from .sources.zhipin import ZhipinSource
+from .sources.greenhouse import GreenhouseSource
 from .store.db import Store
 
 
 def _project_root() -> Path:
-    # config lives in ./config relative to CWD by default.
     return Path.cwd()
+
+
+def _build_sources(root: Path, cfg, args) -> list:
+    """Build the list of job sources based on config + flags."""
+    sources = []
+
+    # 1) Greenhouse (foreign companies, no login needed, always on)
+    gh_yaml = root / "config" / "greenhouse_companies.yaml"
+    if gh_yaml.exists() and not args.demo:
+        gh = GreenhouseSource.from_yaml(gh_yaml, filter_china=True)
+        sources.append(gh)
+        print(f"[greenhouse] {len(gh.companies)} companies configured")
+
+    # 2) Iguopin (state-owned / central enterprises, needs login)
+    if cfg.raw.get("use_iguopin", False) and not args.demo:
+        from .sources.iguopin import IguopinSource
+        profile = root / "data" / "browser_profile_iguopin"
+        try:
+            ig = IguopinSource(profile_dir=profile)
+            ig.__enter__()
+            sources.append(ig)
+            print(f"[iguopin] profile={profile}")
+        except Exception as e:
+            print(f"[warn] iguopin unavailable ({e})", file=sys.stderr)
+
+    # 3) Zhipin (optional, off by default)
+    if cfg.raw.get("use_zhipin", False) and not args.demo:
+        from .sources.zhipin import ZhipinSource
+        profile = root / "data" / "browser_profile"
+        city = cfg.raw.get("zhipin_city", "101220800")
+        try:
+            z = ZhipinSource(profile_dir=profile, city_code=city)
+            z.__enter__()
+            sources.append(z)
+            print(f"[zhipin] city={city}")
+        except Exception as e:
+            print(f"[warn] zhipin unavailable ({e})", file=sys.stderr)
+
+    if not sources:
+        print("[demo] using offline DummySource")
+        sources.append(DummySource())
+    return sources
 
 
 def cmd_submit(args) -> int:
     root = _project_root()
     cfg = load_config(root)
     store = Store(root / "data" / "applied.db")
-
-    sources = []
-    if args.demo or not cfg.raw.get("use_zhipin", True):
-        sources.append(DummySource())
-    if cfg.raw.get("use_zhipin", True):
-        profile = root / "data" / "browser_profile"
-        city = cfg.raw.get("zhipin_city", "101220800")  # 安庆
-        try:
-            zhipin = ZhipinSource(profile_dir=profile, city_code=city)
-            zhipin.__enter__()
-            sources.append(zhipin)
-            print(f"[zhipin] city={city}, profile={profile}")
-        except Exception as e:
-            print(f"[warn] zhipin source unavailable ({e}); using DummySource only",
-                  file=sys.stderr)
-            sources = [DummySource()]
-
+    sources = _build_sources(root, cfg, args)
     browser = DryRunBrowser() if args.dry_run else _maybe_playwright()
 
     pipe = Pipeline(
@@ -75,25 +100,38 @@ def cmd_submit(args) -> int:
     print()
     print(render(store))
     store.close()
-    # close browser context if zhipin was opened
-    if isinstance(sources[-1], ZhipinSource):
-        try:
-            sources[-1].__exit__()
-        except Exception:
-            pass
+    for s in sources:
+        if hasattr(s, "__exit__") and type(s).__name__ in ("ZhipinSource", "IguopinSource"):
+            try:
+                s.__exit__()
+            except Exception:
+                pass
     return 0
 
 
 def cmd_login(args) -> int:
-    """Open a browser and log into zhipin.com. Login is saved to data/browser_profile/."""
+    """Open a browser and log into the requested site."""
     root = _project_root()
-    profile = root / "data" / "browser_profile"
-    city = args.city or "101220800"
-    print("Opening browser. Log in with your phone number / QR code.")
-    print("The window will stay open until it detects you are logged in.")
-    with ZhipinSource(profile_dir=profile, city_code=city) as z:
-        z.ensure_logged_in(timeout_seconds=args.timeout)
-    print("Login detected. Saved to:", profile)
+    site = args.site or "zhipin"
+
+    if site == "zhipin":
+        from .sources.zhipin import ZhipinSource
+        profile = root / "data" / "browser_profile"
+        with ZhipinSource(profile_dir=profile, city_code=args.city or "101220800") as z:
+            z.ensure_logged_in(timeout_seconds=args.timeout)
+        print("Saved to:", profile)
+
+    elif site == "iguopin":
+        from .sources.iguopin import IguopinSource
+        profile = root / "data" / "browser_profile_iguopin"
+        with IguopinSource(profile_dir=profile) as ig:
+            ig.ensure_logged_in()
+        print("Saved to:", profile)
+        print("Now set use_iguopin: true in config/config.yaml")
+
+    else:
+        print(f"unknown site: {site}. Use 'zhipin' or 'iguopin'.")
+        return 1
     return 0
 
 
@@ -135,7 +173,7 @@ def _maybe_playwright():
     try:
         from .browser.base import PlaywrightBrowser
         return PlaywrightBrowser(headless=False)
-    except Exception as e:  # pragma: no cover
+    except Exception as e:
         print(f"[warn] playwright unavailable ({e}); falling back to dry-run",
               file=sys.stderr)
         return DryRunBrowser()
@@ -149,19 +187,16 @@ def main(argv=None) -> int:
     sp.add_argument("--yes", action="store_true", help="do not ask for confirmation")
     sp.add_argument("--dry-run", action="store_true", default=True,
                     help="do not really submit (default: on)")
-    sp.add_argument("--no-dry-run", dest="dry_run", action="store_false",
-                    help="actually drive the browser and submit")
-    sp.add_argument("--limit", type=int, default=20,
-                    help="max jobs per source")
-    sp.add_argument("--demo", action="store_true",
-                    help="use the offline DummySource instead of real sites")
+    sp.add_argument("--no-dry-run", dest="dry_run", action="store_false")
+    sp.add_argument("--limit", type=int, default=20)
+    sp.add_argument("--demo", action="store_true", help="offline DummySource only")
     sp.set_defaults(func=cmd_submit)
 
-    lg = sub.add_parser("login", help="open browser and log into zhipin.com")
-    lg.add_argument("--city", default=None,
-                    help="BOSS city code (default 101220800=Anqing)")
-    lg.add_argument("--timeout", type=int, default=180,
-                    help="seconds to wait for login (default 180)")
+    lg = sub.add_parser("login", help="open browser and log into a site")
+    lg.add_argument("site", nargs="?", default="zhipin",
+                    choices=["zhipin", "iguopin"])
+    lg.add_argument("--city", default=None)
+    lg.add_argument("--timeout", type=int, default=180)
     lg.set_defaults(func=cmd_login)
 
     st = sub.add_parser("status", help="print the daily panel")

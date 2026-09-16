@@ -1,14 +1,10 @@
 # jobhunter-agent
 
-> 一条命令 
->
+> 一条命令
 > `jh submit --yes`
->
 > ，自己抓岗、自己打分、自己定制简历、自己开浏览器填表、过七道闸、提交、比对接口。
 > 人只做三件事：
->
 > **拍板、注册账号、交验证码**
->
 > 。
 
 A reference implementation of the autonomous job-application agent shown in the demo video. It is a **skeleton with the hard safety rules built in**, not a turnkey scraper. Real job-site adapters are pluggable; you write them one site at a time, and every pit you hit becomes a rule under `config/rules/`.
@@ -89,19 +85,19 @@ pip install -e .
 
 cp config/config.example.yaml config/config.yaml
 
-\# run the whole pipeline against the built-in DummySource, dry-run browser:
+\\# run the whole pipeline against the built-in DummySource, dry-run browser:
 
 jh submit --yes
 
-\# inspect the daily panel:
+\\# inspect the daily panel:
 
 jh status
 
-\# answer questions the agent couldn't:
+\\# answer questions the agent couldn't:
 
 jh ask
 
-jh ask q\_xxxxxxxxxx --answer "No, I do not need visa sponsorship."
+jh ask q\\\_xxxxxxxxxx --answer "No, I do not need visa sponsorship."
 ```
 
 The DummySource emits a handful of sample jobs so you can watch the full pipeline run without touching a real job site.
@@ -129,11 +125,11 @@ jobhunter-agent/
 
 ├── data/
 
-│   └── resume\_master.yaml        # the ONLY source of truth for facts
+│   └── resume\\\_master.yaml        # the ONLY source of truth for facts
 
 ├── src/jobhunter/
 
-│   ├── cli.py                   # \`jh\` entry point
+│   ├── cli.py                   # \\\`jh\\\` entry point
 
 │   ├── pipeline.py              # the 8-step pipeline
 
@@ -143,7 +139,7 @@ jobhunter-agent/
 
 │   │   ├── master.py            # master resume model
 
-│   │   ├── fact\_checker.py     # hard-reject on untraceable facts
+│   │   ├── fact\\\_checker.py     # hard-reject on untraceable facts
 
 │   │   └── tailor.py           # per-JD resume rendering
 
@@ -163,7 +159,7 @@ jobhunter-agent/
 
 │   ├── store/                  # SQLite persistence
 
-│   └── dashboard/panel.py       # \`jh status\` panel
+│   └── dashboard/panel.py       # \\\`jh status\\\` panel
 
 ├── tests/
 
@@ -176,42 +172,44 @@ jobhunter-agent/
 
 ***
 
-## Using the built-in BOSS直聘 (zhipin.com) source
+## Job sources
 
-A working source adapter ships in `src/jobhunter/sources/zhipin.py`. It uses
-Playwright with a persistent browser profile under `data/browser_profile/`, so
-you only log in once.
+Three sources are built in. They all feed the same pipeline (hard-filter -> score -> tailor -> seven gates -> dry-run submit). None auto-submits.
 
-```bash
-# 1. install playwright + chromium (one time)
-pip install playwright
-python -m playwright install chromium
+### 1. Greenhouse (foreign companies, default ON, no login)
 
-# 2. log in (a browser window opens; scan QR / phone login)
-jh login
+Hundreds of foreign companies run their careers page on Greenhouse. The public JSON API needs no browser and no login:
 
-# 3. run the pipeline against BOSS直聘 (still dry-run, no real submission)
-jh submit --yes --limit 15
-```
+``bash
+jh submit --yes --limit 50
+``
 
-Configure the city in `config/config.yaml`:
+Companies are listed in `config/greenhouse_companies.yaml` - one token per line. Find a company's token on its careers page (URL looks like `boards.greenhouse.io/<token>`). Add as many as you want; 404s are skipped. Jobs are filtered to China-based locations (Beijing / Shanghai / Shenzhen / Hong Kong / Taipei).
 
-```yaml
-use_zhipin: true
-zhipin_city: "101220800"   # 101010100 Beijing / 101020100 Shanghai / 1012220100 Hefei / 101220800 Anqing
-```
+### 2. iguopin.com (state-owned / central enterprises)
 
-This adapter **only scrapes the job list** (company, title, salary, location,
-URL). It does NOT auto-apply — submissions still go through `DryRunBrowser`
-by default, which records what *would* have been submitted. BOSS's anti-bot
-is aggressive; keep the dry-run on until you have wired up a per-company
-form adapter you trust.
+SASAC-backed central SOE job board. Requires a one-time login:
 
-If the scraper returns zero jobs after a BOSS redesign, open the site
-yourself with `jh login`, inspect a job card, and update the selectors at
-the top of `src/jobhunter/sources/zhipin.py`.
+``bash
+jh login iguopin     # opens Edge, log in with phone, press Enter
+# then in config/config.yaml: use_iguopin: true
+jh submit --yes
+``
 
----
+### 3. BOSS直聘 (optional, off by default)
+
+Anti-bot is aggressive. Only enable after going through the captcha dance once:
+
+``bash
+jh login zhipin
+# then in config/config.yaml: use_zhipin: true
+``
+
+All three adapters only scrape the list. Submissions stay in dry-run until you wire up a per-company form adapter you trust.
+
+
+
+***
 
 ## Adding another real job source
 
@@ -222,11 +220,11 @@ Implement the `Source` protocol in `src/jobhunter/sources/your_site.py`:
 ```
 class YourSiteSource:
 
-&#x20;   name = "yoursite"
+\&#x20;   name = "yoursite"
 
-&#x20;   def search(self, query: str, limit: int = 50) -> list\[m.Job]:
+\&#x20;   def search(self, query: str, limit: int = 50) -> list\\\[m.Job]:
 
-&#x20;       ...  # scrape / query the site, return Job objects
+\&#x20;       ...  # scrape / query the site, return Job objects
 ```
 
 Then register it in `cli.py`:
@@ -234,7 +232,7 @@ Then register it in `cli.py`:
 
 
 ```
-sources = \[DummySource(), YourSiteSource()]
+sources = \\\[DummySource(), YourSiteSource()]
 ```
 
 ## Adding a real browser flow
@@ -268,7 +266,7 @@ sources = \[DummySource(), YourSiteSource()]
 
 
 ```
-pip install -e .\[dev]
+pip install -e .\\\[dev]
 
 pytest -q
 ```

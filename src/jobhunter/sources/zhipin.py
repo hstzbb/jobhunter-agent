@@ -66,8 +66,7 @@ class ZhipinSource:
         from playwright.sync_api import sync_playwright
         self._pw = sync_playwright().start()
         Path(self.profile_dir).mkdir(parents=True, exist_ok=True)
-        self._ctx = self._pw.chromium.launch_persistent_context(
-            self.profile_dir,
+        launch_kwargs = dict(
             headless=False,  # keep visible so you can solve captchas
             viewport={"width": 1366, "height": 900},
             user_agent=(
@@ -75,7 +74,26 @@ class ZhipinSource:
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
                 "Chrome/124.0.0.0 Safari/537.36"
             ),
+            args=[
+                "--disable-blink-features=AutomationControlled",
+            ],
         )
+        # Prefer Edge over bundled Chromium -- a real system browser is
+        # less likely to be fingerprinted as automated.
+        for channel in ("msedge", "chrome"):
+            try:
+                self._ctx = self._pw.chromium.launch_persistent_context(
+                    self.profile_dir, channel=channel, **launch_kwargs,
+                )
+                print(f"[zhipin] using {channel} browser")
+                break
+            except Exception:
+                continue
+        else:
+            self._ctx = self._pw.chromium.launch_persistent_context(
+                self.profile_dir, **launch_kwargs,
+            )
+            print("[zhipin] using bundled chromium")
         return self
 
     def __exit__(self, *exc):
@@ -83,32 +101,30 @@ class ZhipinSource:
         self._pw.stop()
 
     # ---- public API ----
-    def ensure_logged_in(self, timeout_seconds: int = 180) -> None:
-        """Open zhipin.com and wait until the user is logged in.
+    def ensure_logged_in(self, timeout_seconds: int = 600) -> None:
+        """Open a browser and let the user log in manually.
 
-        Detection: a logged-out search page redirects to /login.html.
-        A logged-in page has a user avatar in the top right.
+        We don't try to auto-detect -- BOSS throws captchas constantly.
+        Just open the browser, wait for the user to log in, then save.
         """
-        page = self._ctx.new_page()
-        page.goto("https://www.zhipin.com/", wait_until="domcontentloaded")
-        # Wait until the URL no longer points at the login page and an
-        # avatar appears.
-        deadline = time.time() + timeout_seconds
-        logged = False
-        while time.time() < deadline:
-            url = page.url
-            if "login" not in url and page.query_selector("[class*='user-info'], .btn-secondary"):
-                # secondary button on logged-out page says "登录/注册"
-                if not page.query_selector("a:has-text('登录/注册')"):
-                    logged = True
-                    break
-            time.sleep(2)
-        page.close()
-        if not logged:
-            raise RuntimeError(
-                "Login not detected within the timeout. Run `jh login` again "
-                "and complete the QR / phone-number login in the opened window."
-            )
+        page = self._ctx.pages[0] if self._ctx.pages else self._ctx.new_page()
+        try:
+            page.goto("https://www.zhipin.com/", wait_until="commit", timeout=15000)
+        except Exception:
+            pass
+
+        print("=" * 60)
+        print("浏览器已打开。请在浏览器中：")
+        print("  1. 如果有验证码，手动点完")
+        print("  2. 用手机号登录 zhipin.com")
+        print("  3. 登录成功、能看到岗位推荐页面后，")
+        print("     回到这个终端窗口按回车继续...")
+        print("=" * 60)
+        try:
+            input()
+        except (EOFError, KeyboardInterrupt):
+            pass
+        print("[info] 登录状态已保存到 browser_profile/")
 
     def search(self, query: str, *, limit: int = 30) -> list[m.Job]:
         page = self._ctx.new_page()

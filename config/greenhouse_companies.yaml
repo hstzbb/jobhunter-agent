@@ -1,0 +1,49 @@
+# Greenhouse company tokens.
+#
+# Every line is a Greenhouse board token. Find a company's token by opening
+# its careers page -- the board URL looks like boards.greenhouse.io/<token>.
+# Add as many as you want; 404s are skipped silently.
+#
+# These are batch-verified to be live (as of 2026-09):
+
+- stripe
+- airbnb
+- dropbox
+- figma
+- datadog
+- robinhood
+- coinbase
+- asana
+- gitlab
+- cloudflare
+- okta
+- twilio
+- attentive
+- gusto
+- lattice
+- consensys
+- mattermost
+- discord
+- reddit
+- pinterest
+- lyft
+- waymo
+- affirm
+- sofi
+- brex
+- mercury
+- northbeam
+- netlify
+- vercel
+- duolingo
+- sentry
+- segment
+- postman
+- hashicorp
+- snyk
+- braze
+- intercom
+- fivetran
+- calendly
+- typeform
+- webflow
