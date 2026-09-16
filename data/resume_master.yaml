@@ -7,51 +7,88 @@
 # So: write facts here, once, carefully. The agent is allowed to reorder
 # and reword, but NOT to invent.
 
-name: "Zhang San"
-title: "Backend Engineer"
+name: "胡松涛"
+title: "Java / Python 后端开发工程师（应届·2026 届）"
 
 contact:
-  email: "zhangsan@example.com"
-  phone: "+86 138-0000-0000"
-  location: "Shanghai"
-  github: "https://github.com/zhangsan"
+  email: "435209898@qq.com"
+  phone: "18655640524"
+  birth: "2002.01"
 
 summary: >
-  6 years of backend engineering in Python and Go. Built distributed
-  systems serving 100,000+ QPS. Led a team of 4 engineers. Shipped
-  FastAPI services, PostgreSQL clusters and Kubernetes deployments.
+  软件工程本科毕业（合肥师范学院·专升本，2026 届）。熟练使用 AI Agent
+  辅助编程、文档、检索与方案设计，能独立完成电脑端 AI 环境部署与本地
+  大模型推理。具备 Java / Python 编程与系统开发能力，独立完成过从需求
+  分析、数据库设计、前后端开发到部署上线的完整项目。学习能力强，愿从
+  一线岗位做起，快速掌握软件与制造流程。
 
 experiences:
-  - company: "Tech Corp"
-    title: "Senior Backend Engineer"
-    period: "2022 - present"
+  - company: "毕业设计（独立开发）"
+    title: "老年婚恋交友网站"
+    period: "2025.11 - 2026.05"
     description: >
-      Led a 4-engineer team. Reduced p99 latency from 800ms to 120ms.
-      Designed a PostgreSQL sharding scheme handling 50 million rows.
-      Cut infra cost by 30%.
+      独立完成需求分析、数据库设计、前后端开发与部署上线。
+      技术栈：Java、Spring / SpringMVC / MyBatis、MySQL、WebSocket、ECharts。
+      具备从 0 到 1 交付完整系统的工程化能力，可迁移至设备信息化项目。
 
-  - company: "Data Inc"
-    title: "Backend Engineer"
-    period: "2019 - 2022"
+  - company: "团队项目"
+    title: "人事招聘系统"
+    period: "2023.12 - 2024.04"
     description: >
-      Built asyncio data pipelines in Python. Processed 10 TB of data per day.
-      Wrote 2,000+ unit tests. Improved ingestion throughput by 5x.
+      编写需求规格说明书，负责前端页面与底层数据库设计。
+      熟悉团队协作与开发规范。
 
-  - company: "Startup XY"
-    title: "Software Engineer"
-    period: "2018 - 2019"
+  - company: "安徽省职业技能大赛"
+    title: "融媒体策划与制作（参赛组组长）"
+    period: "2023.05 - 2023.12"
     description: >
-      Built the first production FastAPI service. Onboarded 10,000 users
-      in the first month. Owned CI/CD in GitHub Actions.
+      统筹策划案、新闻稿、短视频与 H5 制作全流程，快速自学新领域并带队完赛。
+      成果：安徽省赛一等奖（第 3 名）。
+
+  - company: "院排球协会 / 校排球队"
+    title: "副会长 / 队员"
+    period: "2022.04 - 2023.05"
+    description: >
+      组织院系排球选拔赛并策划校级趣味排球竞赛，统筹赛事执行。
+      负责赛事宣传与赞助洽谈，成功引入机构赞助，锻炼沟通与协作。
+
+education:
+  school: "合肥师范学院"
+  college: "计算机与人工智能学院"
+  major: "软件工程（专升本）"
+  degree: "本科"
+  period: "2024.09 - 2026.06"
+  note: "2026 届统招专升本；毕业设计《基于 SSM 的老年婚恋交友网站的设计与实现》"
+
+certificates:
+  - "1+X 职业技能等级证书（Java 程序设计·中级）"
+  - "融媒体内容策划与制作（高级工）"
+  - "安徽省 C 语言程序设计二级"
 
 skills:
+  - Java
   - Python
-  - Go
-  - FastAPI
-  - asyncio
-  - PostgreSQL
-  - Kubernetes
-  - Docker
-  - distributed systems
-  - REST
-  - microservices
+  - Spring
+  - SpringMVC
+  - MyBatis
+  - SSM
+  - Maven
+  - MySQL
+  - WebSocket
+  - ECharts
+  - HTML
+  - CSS
+  - JavaScript
+  - AI Agent
+  - 本地大模型推理
+  - 图像生成
+  - 需求分析
+  - 数据库设计
+  - 前后端开发
+  - 部署上线
+  - 文档撰写
+  - Word
+  - Excel
+  - PPT
+  - PhotoShop
+  - Premiere
