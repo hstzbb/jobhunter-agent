@@ -176,7 +176,44 @@ jobhunter-agent/
 
 ***
 
-## Adding a real job source
+## Using the built-in BOSS直聘 (zhipin.com) source
+
+A working source adapter ships in `src/jobhunter/sources/zhipin.py`. It uses
+Playwright with a persistent browser profile under `data/browser_profile/`, so
+you only log in once.
+
+```bash
+# 1. install playwright + chromium (one time)
+pip install playwright
+python -m playwright install chromium
+
+# 2. log in (a browser window opens; scan QR / phone login)
+jh login
+
+# 3. run the pipeline against BOSS直聘 (still dry-run, no real submission)
+jh submit --yes --limit 15
+```
+
+Configure the city in `config/config.yaml`:
+
+```yaml
+use_zhipin: true
+zhipin_city: "101220800"   # 101010100 Beijing / 101020100 Shanghai / 1012220100 Hefei / 101220800 Anqing
+```
+
+This adapter **only scrapes the job list** (company, title, salary, location,
+URL). It does NOT auto-apply — submissions still go through `DryRunBrowser`
+by default, which records what *would* have been submitted. BOSS's anti-bot
+is aggressive; keep the dry-run on until you have wired up a per-company
+form adapter you trust.
+
+If the scraper returns zero jobs after a BOSS redesign, open the site
+yourself with `jh login`, inspect a job card, and update the selectors at
+the top of `src/jobhunter/sources/zhipin.py`.
+
+---
+
+## Adding another real job source
 
 Implement the `Source` protocol in `src/jobhunter/sources/your_site.py`:
 

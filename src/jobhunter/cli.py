@@ -17,6 +17,7 @@ from .dashboard.panel import render
 from .loop.queue import HumanQueue
 from .pipeline import Pipeline
 from .sources.dummy import DummySource
+from .sources.zhipin import ZhipinSource
 from .store.db import Store
 
 
@@ -29,7 +30,23 @@ def cmd_submit(args) -> int:
     root = _project_root()
     cfg = load_config(root)
     store = Store(root / "data" / "applied.db")
-    sources = [DummySource()]  # replace with real sources here
+
+    sources = []
+    if args.demo or not cfg.raw.get("use_zhipin", True):
+        sources.append(DummySource())
+    if cfg.raw.get("use_zhipin", True):
+        profile = root / "data" / "browser_profile"
+        city = cfg.raw.get("zhipin_city", "101220800")  # 安庆
+        try:
+            zhipin = ZhipinSource(profile_dir=profile, city_code=city)
+            zhipin.__enter__()
+            sources.append(zhipin)
+            print(f"[zhipin] city={city}, profile={profile}")
+        except Exception as e:
+            print(f"[warn] zhipin source unavailable ({e}); using DummySource only",
+                  file=sys.stderr)
+            sources = [DummySource()]
+
     browser = DryRunBrowser() if args.dry_run else _maybe_playwright()
 
     pipe = Pipeline(
@@ -58,6 +75,25 @@ def cmd_submit(args) -> int:
     print()
     print(render(store))
     store.close()
+    # close browser context if zhipin was opened
+    if isinstance(sources[-1], ZhipinSource):
+        try:
+            sources[-1].__exit__()
+        except Exception:
+            pass
+    return 0
+
+
+def cmd_login(args) -> int:
+    """Open a browser and log into zhipin.com. Login is saved to data/browser_profile/."""
+    root = _project_root()
+    profile = root / "data" / "browser_profile"
+    city = args.city or "101220800"
+    print("Opening browser. Log in with your phone number / QR code.")
+    print("The window will stay open until it detects you are logged in.")
+    with ZhipinSource(profile_dir=profile, city_code=city) as z:
+        z.ensure_logged_in(timeout_seconds=args.timeout)
+    print("Login detected. Saved to:", profile)
     return 0
 
 
@@ -117,7 +153,16 @@ def main(argv=None) -> int:
                     help="actually drive the browser and submit")
     sp.add_argument("--limit", type=int, default=20,
                     help="max jobs per source")
+    sp.add_argument("--demo", action="store_true",
+                    help="use the offline DummySource instead of real sites")
     sp.set_defaults(func=cmd_submit)
+
+    lg = sub.add_parser("login", help="open browser and log into zhipin.com")
+    lg.add_argument("--city", default=None,
+                    help="BOSS city code (default 101220800=Anqing)")
+    lg.add_argument("--timeout", type=int, default=180,
+                    help="seconds to wait for login (default 180)")
+    lg.set_defaults(func=cmd_login)
 
     st = sub.add_parser("status", help="print the daily panel")
     st.set_defaults(func=cmd_status)

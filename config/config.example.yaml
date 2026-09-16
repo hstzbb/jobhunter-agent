@@ -22,3 +22,9 @@ must_have_any:
 
 # Where screenshots of each submission go.
 screenshot_dir: "data/shots"
+
+# BOSS直聘 source. Run `jh login` once before using this.
+use_zhipin: true
+# City codes: 101010100 Beijing, 101020100 Shanghai, 101210100 Hangzhou,
+# 101220100 Hefei, 101220800 Anqing, 101190400 Nanjing.
+zhipin_city: "101220800"

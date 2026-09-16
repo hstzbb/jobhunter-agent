@@ -1,6 +1,7 @@
 # data & secrets
 data/applied.db
 data/shots/
+data/browser_profile/
 config/config.yaml
 *.log
 
