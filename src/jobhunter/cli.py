@@ -39,12 +39,12 @@ def _build_sources(root: Path, cfg, args) -> list:
     # 2) Iguopin (state-owned / central enterprises, needs login)
     if cfg.raw.get("use_iguopin", False) and not args.demo:
         from .sources.iguopin import IguopinSource
-        profile = root / "data" / "browser_profile_iguopin"
+        cookies = root / "data" / "iguopin_cookies.json"
         try:
-            ig = IguopinSource(profile_dir=profile)
+            ig = IguopinSource(cookies_path=cookies)
             ig.__enter__()
             sources.append(ig)
-            print(f"[iguopin] profile={profile}")
+            print(f"[iguopin] cookies={cookies}")
         except Exception as e:
             print(f"[warn] iguopin unavailable ({e})", file=sys.stderr)
 
@@ -123,10 +123,10 @@ def cmd_login(args) -> int:
 
     elif site == "iguopin":
         from .sources.iguopin import IguopinSource
-        profile = root / "data" / "browser_profile_iguopin"
-        with IguopinSource(profile_dir=profile) as ig:
-            ig.ensure_logged_in()
-        print("Saved to:", profile)
+        cookies = root / "data" / "iguopin_cookies.json"
+        with IguopinSource(cookies_path=cookies) as ig:
+            ig.ensure_logged_in(wait_seconds=180)
+        print("Cookies saved to:", cookies)
         print("Now set use_iguopin: true in config/config.yaml")
 
     else:
