@@ -21,3 +21,9 @@ dist/
 # os
 .DS_Store
 Thumbs.db
+
+# Browser profiles and cookies (NEVER commit)
+data/browser_profile*/
+data/iguopin_cookies.json
+data/*.png
+data/applied.db
